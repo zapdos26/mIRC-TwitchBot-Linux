@@ -1,0 +1,334 @@
+alias sticky {
+  var %re = /(.)\1{ %protection. [ $+ [ $me ] $+ ] .spam.limitamount ,}/
+  return $iif($regex($1-,%re), $regml(1), $null)
+}
+
+on *:text:!protection*:#:{
+  if (($nick == $right(#,-1) ) && ( $2 == default ) && ( $3 == set )) {
+    set %protection. [ $+ [ # ] $+ ] .caps.status on
+    set %protection. [ $+ [ # ] $+ ] .emotes.status on
+    set %protection. [ $+ [ # ] $+ ] .spam.status on
+    set %protection. [ $+ [ # ] $+ ] .links.status on
+    set %protection. [ $+ [ # ] $+ ] .repeat.status on
+    set %protection. [ $+ [ # ] $+ ] .blacklist.status on
+    set %protection. [ $+ [ # ] $+ ] .symbol.status on
+    set %protection. [ $+ [ # ] $+ ] .fakedonation.status on
+    set %protection. [ $+ [ # ] $+ ] .silent off
+    set %protection. [ $+ [ # ] $+ ] .caps.message Easy on the caps please.
+    set %protection. [ $+ [ # ] $+ ] .emotes.message Easy on the emotes please.  
+    set %protection. [ $+ [ # ] $+ ] .symbol.message Easy on the symbols please. 
+    set %protection. [ $+ [ # ] $+ ] .links.message Leave the links to the moderators please.
+    set %protection. [ $+ [ # ] $+ ] .repeat.message Please stop repeating.
+    set %protection. [ $+ [ # ] $+ ] .spam.message Please don't spam.
+    set %protection. [ $+ [ # ] $+ ] .blacklist.message Keep it PG please.
+    set %protection. [ $+ [ # ] $+ ] .fakedonation.message Please don't lie to get attention.
+    set %protection. [ $+ [ # ] $+ ] .caps.limitamount 8 
+    set %protection. [ $+ [ # ] $+ ] .emotes.limitamount 8
+    set %protection. [ $+ [ # ] $+ ] .symbol.limitamount 10
+    set %protection. [ $+ [ # ] $+ ] .repeat.limitamount 5
+    set %protection. [ $+ [ # ] $+ ] .spam.limitamount 16
+    set %protection. [ $+ [ # ] $+ ] .caps.limitpercentage 80
+    set %protection. [ $+ [ # ] $+ ] .symbol.limitpercentage 90 
+    set %protection. [ $+ [ # ] $+ ] .spam.limitpercentage 90
+    set %protection. [ $+ [ # ] $+ ] .caps.timeout 1
+    set %protection. [ $+ [ # ] $+ ] .emotes.timeout 1
+    set %protection. [ $+ [ # ] $+ ] .spam.timeout 1
+    set %protection. [ $+ [ # ] $+ ] .links.timeout 1
+    set %protection. [ $+ [ # ] $+ ] .repeat.timeout 1
+    set %protection. [ $+ [ # ] $+ ] .blacklist.timeout 1
+    set %protection. [ $+ [ # ] $+ ] .symbol.timeout 1
+    set %protection. [ $+ [ # ] $+ ] .fakedonation.timeout 1
+    set %streamer. [ $+ [ # ] $+ ] .bits.message 
+    set %streamer. [ $+ [ # ] $+ ] .bits.amount 1
+    msg # The bot's default settings has been set for this channel.
+    break
+  }
+  elseif ($msgtags(mod).key == 1) {
+    if ($2 != caps && $2 != emotes && $2 != symbol && $2 != spam && $2 != repeat && $2 != blacklist && $2 != links && $2 != silent && $2 != fakedonation ) { goto failure }
+    elseif ($3 != on && $3 != off && $3 != message && $3 != limitamount && $3 != limitpercentage && $3 != add && $3 != del && $3 != whitelist && $3 != timeout && $3 != regular && $3 != sub) { goto failure }
+    elseif (($2 == blacklist || $2 == links || $2 == fakedonation) && ( $3 == limitamount || $3 == limitpercentage)) { goto failure }
+    elseif (($2 != links) && ($3 == whitelist )) { goto failure }
+    elseif (($2 != emotes && $2 != blacklist && $2 != links) && ($3 == add || $3 == del)) { goto failure }
+    elseif (($3 == timeout) && ($4 !isnum || $4 == 0)) { goto failure }
+    elseif (($2 == repeat || $2 == emotes || $2 == spam ) && ($3 == limitpercentage)) { goto failure } 
+    elseif (($3 == regular) && ($4 != On && $4 != off)) { goto failure }
+    elseif (($3 == regular) && ($4 == On || $4 == off) && ( %protection. [ $+ [ # ] $+ ] . [ $+ [ $2 ] $+ ] .regular == $4)) { 
+      msg # Regulars are already protected in reference to $2 $+ .
+      break
+    }
+    elseif (($3 == sub) && ($4 != On && $4 != off)) { goto failure }
+    elseif (($3 == sub ) && ($4 == On || $4 == off) && ( %protection. [ $+ [ # ] $+ ] . [ $+ [ $2 ] $+ ] .sub == $4)) { 
+      msg # Subscribers are already protected in reference to $2 $+ .
+      break
+    }
+    elseif (( $2 != silent) && ($3 == On || $3 == Off )) && ( %protection. [ $+ [ # ] $+ ] . [ $+ [ $2 ] $+ ] .status == $3)) {
+      msg # /me $nick $+ , $2 protection is already $3 $+ .
+      break
+    }
+    elseif (($2 == Silent) && ($3 != on && $3 != off )) { goto failure }
+    elseif (($2 == Silent) && ($3 == On || $3 == Off )  && ( %protection. [ $+ [ # ] $+ ] .silent == $3 )) {
+      msg # /me $nick $+ , Silent mode is already $3 $+ .
+      break
+    }
+    elseif (($2 == Silent) && ($3 == On || $3 == Off )) {
+      set %protection. [ $+ [ # ] $+ ] .silent $3 
+      msg # /me $nick $+ , Silent mode is now $3 $+ .
+      break
+    }
+    else {
+      if ( $3 == On || $3 == Off ) {
+        set %protection. [ $+ [ # ] $+ ] . [ $+ [ $2 ] $+ ] .status $3
+        msg # $nick $+ , $2 protection has been turned $3 $+ .
+        break
+      }
+      elseif ($3 == add || $3 == del) {
+        var %file $2 $+ .ini
+        if ($3 == add) {
+          if ($ini(%file,#,$4) == $null) {
+            writeini %file # $4 1
+            msg # /me $4 has been added to $2 $+ .
+          }
+          else {
+            msg # /me $4 is already in $2 $+ .
+          }
+        }
+        elseif ($3 == del) {
+          if ($ini(%file,#,$4) != $null) {
+            remini %file # $4
+            msg # /me $4 has been removed from $2 $+ .
+          }
+          else {
+            msg # Sorry, $4 was not found in $2 $+ .
+          }
+        }
+      }
+      elseif ($3 == whitelist) && ($4 == add || $4 == del) {
+        var %file $3 $+ .ini
+        if ($4 == add) {
+          if ($ini(%file,#,$5) == $null) {
+            writeini %file # $5 1
+            msg # /me $5 has been added to $3 $+ .
+          }
+          else {
+            msg # /me $5 is already in $3 $+ .
+          }
+        }
+        elseif ($4 == del) {
+          if ($ini(%file,#,$5) != $null) {
+            remini %file # $5
+            msg # /me $5 has been removed from $3 $+ .
+          }
+        }
+      }
+      else {
+        set %protection. [ $+ [ # ] $+ ] . [ $+ [ $2 ] $+ ] . [ $+ [ $3 ] ] $4-
+        msg # $nick $+ , $3 has been set for $2 $+ . 
+        halt
+        :failure
+        msg # $nick For more info about how to set the protection settings, visit https://goo.gl/o1Otwc .
+        break
+      }
+    }
+  }
+}
+
+on *:text:!permit*:#: {
+  if ($msgtags(mod).key == 1) {
+    set -u30 %permit $addtok(%permit,$2,32)
+    msg $chan You have 30 seconds to post a link, $2
+  }
+}
+
+on *:TEXT:*:#: {
+  if ($msgtags(mod).key == 1) { return }
+  if ($nick == $right(#,-1)) { return }
+  if (%protection. [ $+ [ # ] $+ ] .links.status == On ) {
+    if ((Regular. [ $+ [ # ] ] isin $level($nick)) && (%protection. [ $+ [ # ] $+ ] .links.regular == On )) { return }
+    if ($msgtags(subscriber).key == 1) && (%protection. [ $+ [ # ] $+ ] .links.sub == On ) { return }
+    if ($istok(%permit,$nick,32)) { return }
+    var %q = 1 | while $ini(links.ini, # ,%q) {
+      var %listl = %listl $v1
+      inc %q
+    }
+    var %g = 0
+    while (%g < $numtok(%listl,32)) {
+      inc %g
+      var %link = $gettok(%listl,%g,32)
+      if (%link isin $1-) {
+        var %w = 1 | while $ini(whitelist.ini,#,%w) {
+          var %listwl = %listwl $v1
+          inc %w
+        }
+        var %wl = 0
+        while (%wl < $numtok(%listwl,32)) {
+          inc %wl
+          var %wli = $gettok(%listwl,%wl,32)
+          if (%wli isin $1-) {
+            goto continuingprotection
+          }
+        }
+        var %fff = 1 | while $ini(pun.ini,pun,%fff) {
+          var %listp = %listp $v1
+          inc %fff
+        }
+        var %ggg = 0
+        while (%ggg < $numtok(%listp,32)) {
+          inc %ggg
+          var %ddd  $gettok(%listp,%ggg,32)
+          if (%link $+ %ddd isin $1-) { goto linktimeout }
+          elseif (%ddd $+ %link isin $1-) { goto stop } 
+        }  
+        elseif ($chr(32) $+ %link iswm $1-) { goto linktimeout }
+        if (* $+ %link $+ & iswm $1- ) {
+          :stop
+          goto continuingprotection
+        }
+        else {
+          :linktimeout
+          msg # .timeout $nick %protection. [ $+ [ # ] $+ ] .links.timeout No links please.
+          if (%protection. [ $+ [ # ] $+ ] .silent == Off) {
+            if ((%floodlinks) || ($($+(%,floodlinks.,$2),2))) { return } 
+            msg #  $nick $+ , %protection. [ $+ [ # ] $+ ] .links.message
+            set -u15 %floodlinks On
+          }
+          break
+        }
+      } 
+    }
+  }
+  :continuingprotection
+  if (%protection. [ $+ [ # ] $+ ] .emotes.status == On ) {
+    if ((Regular. [ $+ [ # ] ] isin $level($nick)) && (%protection. [ $+ [ # ] $+ ] .emotes.regular == On )) { return }
+    if ($msgtags(subscriber).key == 1) && (%protection. [ $+ [ # ] $+ ] .emotes.sub == On ) { return }
+    var %i = 1 | while $ini(emotes.ini,#,%i) {
+      var %list = %list $v1
+      inc %i
+    }
+    var %j = 0
+    %t = 0
+    while (%j < $numtok(%list,32)) {
+      inc %j 
+      var %words = $gettok(%list,%j,32)
+      var %p = $countcs($strip($1-),%words) 
+      var %t = %p + %t 
+      if (%t >= %protection. [ $+ [ # ] $+ ] .emotes.limitamount ) {
+        msg # /timeout $nick %protection. [ $+ [ # ] $+ ] .emotes.timeout Easy on the emotes please. 
+        if (%protection. [ $+ [ # ] $+ ] .silent == Off) {
+          if ((%floodemotes) || ($($+(%,floodemotes.,$2),2))) { return } 
+          msg $chan $nick $+ , %protection. [ $+ [ # ] $+ ] .emotes.message
+          set -u15 %floodemotes On
+        }      
+        break
+      }
+    }
+  }
+  if (%protection. [ $+ [ # ] $+ ] .caps.status == On ) {
+    if ((Regular. [ $+ [ # ] ] isin $level($nick)) && (%protection. [ $+ [ # ] $+ ] .caps.regular == On )) { return }
+    if ($msgtags(subscriber).key == 1) && (%protection. [ $+ [ # ] $+ ] .caps.sub == On ) { return }
+    if ( $len($1-) >= %protection. [ $+ [ # ] $+ ] .caps.limitamount ) {
+      if ( $calc($regex($1-,/[A-Z]/g) / $regex($1-,/[A-Z]/gi) * 100) >= %protection. [ $+ [ # ] $+ ] .caps.limitpercentage ) {
+        if (%protection. [ $+ [ # ] $+ ] .silent == Off) {
+          if ((%floodcaps) || ($($+(%,floodcaps.,$2),2))) { return } 
+          msg # $nick $+ , %protection. [ $+ [ # ] $+ ] .caps.message
+        }
+        msg # /timeout $nick %protection. [ $+ [ # ] $+ ] .caps.timeout Easy on the caps please.
+        break
+      }
+    }
+  }
+  if (%protection. [ $+ [ # ] $+ ] .symbol.status == On ) {
+    if ((Regular. [ $+ [ # ] ] isin $level($nick)) && (%protection. [ $+ [ # ] $+ ] .sybmbol.regular == On )) { return }
+    if ($msgtags(subscriber).key == 1) && (%protection. [ $+ [ # ] $+ ] .symbol.sub == On ) { return }
+    if ( $len($1-) >= %protection. [ $+ [ # ] $+ ] .symbol.limitamount ) {
+      if ( $calc( $regex($1-,/[^a-z0-9]/gi) * 100 / $len($1-) ) >= %protection. [ $+ [ # ] $+ ] .symbol.limitpercentage ) {  
+        if (%protection. [ $+ [ # ] $+ ] .silent == Off) {
+          if ((%floodsymbols) || ($($+(%,floodsymbols.,$2),2))) { return } 
+          msg #  $nick $+ , %protection. [ $+ [ # ] $+ ] .symbol.message
+          set -u15 %floodsymbols On
+        }
+        msg $chan .timeout $nick %protection. [ $+ [ # ] $+ ] .symbol.timeout Easy on the symbols please.
+        break
+      }
+    }
+  }
+  if (%protection. [ $+ [ # ] $+ ] .repeat.status == On ) {
+    if ((Regular. [ $+ [ # ] ] isin $level($nick)) && (%protection. [ $+ [ # ] $+ ] .repeat.regular == On )) { return }
+    if ($msgtags(subscriber).key == 1) && (%protection. [ $+ [ # ] $+ ] .repeat.sub == On ) { return }
+    if ($1- == $readini(RepeatedMessages.ini,#, $nick)) {
+      var %times $calc($readini(RepeatedMessagesTimes.ini, #, $nick) + 1)
+      if (%times >= %protection. [ $+ [ # ] $+ ] .repeat.limitamount) {
+        if (%protection. [ $+ [ # ] $+ ] .silent == Off) {
+          if ((%floodrepeat) || ($($+(%,floodrepeat.,$2),2))) { return } 
+          msg #  $nick $+ , %protection. [ $+ [ # ] $+ ] .repeat.message
+          set -u15 %floodrepeat On
+        }
+        msg # /timeout $nick %protection. [ $+ [ # ] $+ ] .repeat.timeout Please stop repeating.
+        writeini RepeatedMessagesTimes.ini # $nick %times
+      }
+      else {
+        writeini RepeatedMessagesTimes.ini # $nick %times
+      }
+    }
+    else {
+      writeini RepeatedMessagesTimes.ini # $nick 1
+      writeini RepeatedMessages.ini # $nick $1-
+    }
+  }
+  if (%protection. [ $+ [ # ] $+ ] .spam.status == On ) {
+    if ((Regular. [ $+ [ # ] ] isin $level($nick)) && (%protection. [ $+ [ # ] $+ ] .spam.regular == On )) { return }
+    if ($msgtags(subscriber).key == 1) && (%protection. [ $+ [ # ] $+ ] .spam.sub == On ) { return }
+    var %spam = 1
+    while ($gettok($1-, %spam, 32) != $null) {
+      set %protection. [ $+ [ $me ] $+ ] .spam.limitamount %protection. [ $+ [ # ] $+ ] .spam.limitamount
+      if ($sticky(%word) != $null) {
+        msg $chan .timeout $nick %protection. [ $+ [ # ] $+ ] .spam.timeout Please stop spamming.
+        if ((%floodspam || ($($+(%,floodspam.,$2),2))) { return } 
+        if (%protection. [ $+ [ # ] $+ ] .silent == Off) {
+          msg #  $nick $+ , %protection. [ $+ [ # ] $+ ] .spam.message
+          set -u15 %floodspam On
+        }
+        break
+      }
+      inc %spam
+    }
+  }
+  if (%protection. [ $+ [ # ] $+ ] .blacklist.status == On ) {
+    if ((Regular. [ $+ [ # ] ] isin $level($nick)) && (%protection. [ $+ [ # ] $+ ] .blacklist.regular == On )) { return }
+    if ($msgtags(subscriber).key == 1) && (%protection. [ $+ [ # ] $+ ] .blacklist.sub == On ) { return }
+    if ($chr(42) $+ $chr(42) $+ $chr(42) == $1-) { goto timeout }
+    if ($chr(32) $+ $chr(42) $+ $chr(42) $+ $chr(42) $+ $chr(32) isin $1- ) { goto timeout }
+    var %blackcount = 1 | while $ini(blacklist.ini,#,%blacklist) {
+      var %blacklistlist = %blacklistlistlist $v1
+      inc %blackcount
+    }
+    var %black = 0
+    while (%black < $numtok(%blacklistlist,32)) {
+      inc %black
+      var %words = $gettok(%blacklistlist,%black,32)
+      var %blackamount = $countcs($strip($1-),%words)     
+      if (%blackamount >= 1) {
+        :timeout
+        msg # /timeout $nick %protection. [ $+ [ # ] $+ ] .blacklist.timeout Please keep it PG. 
+        if ((%floodblacklist) || ($($+(%,floodblacklist.,$2),2))) { return } 
+        if (%protection. [ $+ [ # ] $+ ] .silent == Off)  {
+          msg $chan  $nick $+ , %protection. [ $+ [ # ] $+ ] .blacklist.message
+          set -u15 %floodblacklist On
+        }      
+        break
+      }
+    }
+  }
+}
+
+on *:action:*:#:{
+  if ($msgtags(mod).key == 1) { return }
+  if (Regular. [ $+ [ # ] ] isin $level($nick)) && (%protection. [ $+ [ # ] $+ ] .fakedonation.regular == On )) { return }
+  if ($msgtags(subscriber).key == 1) && (%protection. [ $+ [ # ] $+ ] .fakedonation.sub == On ) { return }
+  if (%protection. [ $+ [ # ] $+ ] .fakedonation.status == Off ) { return }
+  if ( $ isin $1- || donate isin $1-) {
+    if (%protection. [ $+ [ # ] $+ ] .silent == Off) {
+      msg $chan  $nick $+ , %protection. [ $+ [ # ] $+ ] .fakedonation.message
+    }
+    msg # /timeout $nick %protection. [ $+ [ # ] $+ ] .fakedonation.timeout No fake donations here
+  }
+}
