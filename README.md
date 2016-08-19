@@ -6,3 +6,7 @@ The focus of the bot is fit the needs of the streamer, not the streamer fit the 
 A list of commands can be found here: https://goo.gl/o1Otwc
 
 The bot currently runs as Jellie_bot in GoodTimesWithScar's streams and Ak47PomPoms in Chickenb0ne's streams.
+
+Currently, the cooldown for custom commands as well as the !uptime command is 5 seconds for moderators and 30 seconds for all other users. This can be changed however editing both the Uptime.ini and adddelcom.ini. I am planning on adding custom cooldowns in the future.
+
+If you have any questions, feel free to tweet me at @zapdos26. 
