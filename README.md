@@ -9,6 +9,6 @@ The bot currently runs as Jellie_bot in GoodTimesWithScar's streams and Ak47PomP
 
 Currently, the cooldown for custom commands as well as the !uptime command is 5 seconds for moderators and 30 seconds for all other users. This can be changed however editing both the Uptime.ini and adddelcom.ini. I am planning on adding custom cooldowns in the future.
 
-Currently, Zapdosbot is in public beta in Zapdos26's channel (https://www.twitch.tv/zapdos26) with it being able to come into your channel for either testing or for actual use. :) Just do !join and if the bot is modded in your channel, it will remain in your channel unless you either doo !part or you unmod  the bot. 
+Currently, Zapdosbot is in public beta in Zapdos26's channel (https://www.twitch.tv/zapdos26) with it being able to come into your channel for either testing or for actual use. :) Just do !join and if the bot is modded in your channel, it will remain in your channel unless you either do !part or you unmod  the bot. 
 
 If you have any questions, feel free to tweet me at @zapdos26. 
